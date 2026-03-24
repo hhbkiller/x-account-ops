@@ -6,12 +6,19 @@
 
 - 发布纯文本帖子
 - 发布图文帖子
-- 将长文拆分为 thread 连续发布
+- 发布明确的 thread 串帖
 - 搜索指定主题的帖子
 - 按“热度”重排搜索结果
 - 对热门帖子自动跟贴
 - 点赞、转发、删除、查帖
 - 同时检查 OAuth2 / Auth1 是否可用
+
+注意：
+
+- `Thread` 和 `X Articles` 不是一回事。
+- 当前这个 skill 支持的是 `thread`。
+- 当前这个 skill 不支持原生 `X Articles` 发布。
+- `article` 命令现在不会再默认把长文误发成十几个跟帖。
 
 当前实现采用双栈认证：
 
@@ -139,7 +146,7 @@ python scripts/x_ops.py hot-reply \
 ### 7. 发布长文 thread
 
 ```bash
-python scripts/x_ops.py article --title "发布说明" --text-file ./article.md
+python scripts/x_ops.py thread --title "发布说明" --text-file ./article.md
 ```
 
 ## 安装教程
@@ -269,6 +276,7 @@ python scripts/x_ops.py search --query "OpenAI" --sort hot --limit 5
 python scripts/x_ops.py lookup --tweet-id 1234567890
 python scripts/x_ops.py post --text "hello"
 python scripts/x_ops.py post --text "hello" --image ./a.jpg
+python scripts/x_ops.py thread --title "长文串帖" --text-file ./article.md
 python scripts/x_ops.py reply --tweet-id 1234567890 --text "收到"
 python scripts/x_ops.py like --tweet-id 1234567890
 python scripts/x_ops.py repost --tweet-id 1234567890
@@ -298,6 +306,9 @@ python scripts/x_ops.py search --query "AI" --sort hot --no-skip-replies --no-sk
 
 ## 注意事项
 
+- `article` 不再默认把长文转换成 thread。这样做是为了避免把“文章”误发成十几个跟帖。
+- 如果你明确就是要发 thread，请使用 `thread` 命令。
+- 如果你一定要兼容旧用法，可以显式写：`article --as-thread`
 - `hot-reply` 默认不会自己生成内容，你需要提供 `--reply-text`、`--reply-text-file` 或 `--reply-template`
 - 公开搜索只覆盖近 7 天内容
 - “热度”是基于最近帖子列表做本地重排，不是 X 官方返回的原生热榜

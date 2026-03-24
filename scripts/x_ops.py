@@ -824,10 +824,10 @@ def command_post(client: XClient, args: argparse.Namespace) -> Dict[str, Any]:
     return {"ok": True, "created": created}
 
 
-def command_article(client: XClient, args: argparse.Namespace) -> Dict[str, Any]:
+def _publish_thread(client: XClient, args: argparse.Namespace) -> Dict[str, Any]:
     text = load_text_argument(args, "text")
     if not text:
-        raise SkillError("Article text is required.")
+        raise SkillError("Thread text is required.")
     segments = build_thread_segments(text, args.max_chars, title=args.title)
     preview = [{"index": idx + 1, "text": segment} for idx, segment in enumerate(segments)]
     if args.dry_run:
@@ -855,6 +855,20 @@ def command_article(client: XClient, args: argparse.Namespace) -> Dict[str, Any]
             raise SkillError(f"Thread step {index + 1} did not return a post id.")
         time.sleep(1.0)
     return {"ok": True, "segments": len(segments), "posts": created_posts}
+
+
+def command_thread(client: XClient, args: argparse.Namespace) -> Dict[str, Any]:
+    return _publish_thread(client, args)
+
+
+def command_article(client: XClient, args: argparse.Namespace) -> Dict[str, Any]:
+    if getattr(args, "as_thread", False):
+        return _publish_thread(client, args)
+    raise SkillError(
+        "X Articles and threads are different publishing modes. "
+        "This skill no longer maps `article` to a thread by default. "
+        "Use `thread` if you want a numbered thread, or pass `article --as-thread` only for backward compatibility."
+    )
 
 
 def command_reply(client: XClient, args: argparse.Namespace) -> Dict[str, Any]:
@@ -961,14 +975,24 @@ def build_parser() -> argparse.ArgumentParser:
     post.add_argument("--made-with-ai", action="store_true", help="Mark the post as containing AI-generated media")
     post.add_argument("--dry-run", action="store_true", help="Return the payload without posting")
 
-    article = subparsers.add_parser("article", help="Turn long text into a numbered thread")
-    article.add_argument("--title", help="Optional article title for the first thread segment")
-    article.add_argument("--text", help="Article body")
-    article.add_argument("--text-file", required=True, help="Path to the article text or markdown file")
-    article.add_argument("--image", help="Optional image for the first post in the thread")
-    article.add_argument("--max-chars", type=int, default=260, help="Max characters per thread segment")
-    article.add_argument("--made-with-ai", action="store_true", help="Mark the first post as containing AI-generated media")
-    article.add_argument("--dry-run", action="store_true", help="Preview the generated segments only")
+    thread = subparsers.add_parser("thread", help="Publish a numbered thread from long text")
+    thread.add_argument("--title", help="Optional thread title for the first segment")
+    thread.add_argument("--text", help="Thread body")
+    thread.add_argument("--text-file", required=True, help="Path to the thread text or markdown file")
+    thread.add_argument("--image", help="Optional image for the first post in the thread")
+    thread.add_argument("--max-chars", type=int, default=260, help="Max characters per thread segment")
+    thread.add_argument("--made-with-ai", action="store_true", help="Mark the first post as containing AI-generated media")
+    thread.add_argument("--dry-run", action="store_true", help="Preview the generated segments only")
+
+    article = subparsers.add_parser("article", help="Reserved for native X Articles; no longer auto-converts to a thread")
+    article.add_argument("--title", help="Reserved for future native Article publishing")
+    article.add_argument("--text", help="Reserved for future native Article publishing")
+    article.add_argument("--text-file", help="Reserved for future native Article publishing")
+    article.add_argument("--image", help="Reserved for future native Article publishing")
+    article.add_argument("--max-chars", type=int, default=260, help="Used only when --as-thread is explicitly set")
+    article.add_argument("--made-with-ai", action="store_true", help="Used only when --as-thread is explicitly set")
+    article.add_argument("--dry-run", action="store_true", help="Used only when --as-thread is explicitly set")
+    article.add_argument("--as-thread", action="store_true", help="Backward-compatible escape hatch to publish as a thread explicitly")
 
     reply = subparsers.add_parser("reply", help="Reply to a specific post")
     reply.add_argument("--tweet-id", required=True, help="Target post id")
@@ -1015,6 +1039,7 @@ COMMANDS = {
     "search": command_search,
     "lookup": command_lookup,
     "post": command_post,
+    "thread": command_thread,
     "article": command_article,
     "reply": command_reply,
     "like": command_like,

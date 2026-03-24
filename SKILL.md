@@ -1,6 +1,6 @@
 ---
 name: x-account-ops
-description: Operate an X account with official X API credentials stored in a local .env file. Use when Codex needs to publish X posts, publish image-plus-text posts, turn a long article into a thread, search a topic's recent or "hot" posts, like or repost a post, or automatically reply to hot posts using a supplied reply text or reply template. This skill supports OAuth 2.0 user tokens for general posting and search, plus OAuth 1.0a credentials for more reliable media upload when available.
+description: Operate an X account with official X API credentials stored in a local .env file. Use when Codex needs to publish X posts, publish image-plus-text posts, publish explicit numbered threads from long text, search a topic's recent or "hot" posts, like or repost a post, or automatically reply to hot posts using a supplied reply text or reply template. This skill supports OAuth 2.0 user tokens for general posting and search, plus OAuth 1.0a credentials for more reliable media upload when available. Do not use this skill to publish native X Articles unless a future browser/article workflow is added.
 ---
 
 # X Account Ops
@@ -15,7 +15,7 @@ Run from the skill directory or pass `--env-file` explicitly:
 python scripts/x_ops.py me
 python scripts/x_ops.py search --query "AI agents lang:en -is:retweet" --sort hot --limit 5
 python scripts/x_ops.py post --text "Shipping a new build today." --image ./cover.png
-python scripts/x_ops.py article --title "Launch notes" --text-file ./launch.md --image ./cover.png
+python scripts/x_ops.py thread --title "Launch notes" --text-file ./launch.md --image ./cover.png
 python scripts/x_ops.py reply --tweet-id 1900000000000000000 --text "Strong point. The rollout risk is mostly around distribution, not capability."
 python scripts/x_ops.py hot-reply --query "open source agents" --limit 2 --reply-template "Good thread, @{username}. The part about '{excerpt}' is the key constraint here."
 ```
@@ -60,7 +60,8 @@ python scripts/x_ops.py reply --tweet-id <id> --text "<reply>"
 ### Publishing
 
 - `post`: create a text post or image-plus-text post; image upload prefers Auth1 when available
-- `article`: convert a long text file into a numbered thread; attach one image to the first post
+- `thread`: convert a long text file into a numbered thread; attach one image to the first post
+- `article`: reserved for native X Articles; it no longer auto-converts content into a thread
 - `reply`: reply to a specific post
 - `delete`: delete a post owned by the authenticated account
 
@@ -75,7 +76,8 @@ python scripts/x_ops.py reply --tweet-id <id> --text "<reply>"
 ## Behavioral Notes
 
 - "Hot" is heuristic. X recent search returns reverse-chronological results, so the script re-ranks them using public engagement metrics plus a mild freshness decay.
-- `article` is the skill's "图文文章" path. It turns long text into a thread because public X API support for standalone article publishing is not exposed here.
+- `thread` and `article` are different concepts. This skill currently supports threads only. Native X Articles are not implemented here.
+- `article` exists only to prevent silent misuse; it will tell the caller to use `thread` unless `--as-thread` is explicitly passed for backward compatibility.
 - `hot-reply` does not invent text on its own. Supply the final reply or a template so the behavior stays explicit and reviewable.
 - For risky automation, prefer `--dry-run` first.
 
