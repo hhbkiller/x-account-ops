@@ -9,7 +9,7 @@
 - 发布明确的 thread 串帖
 - 搜索指定主题的帖子
 - 按“热度”重排搜索结果
-- 对热门帖子自动跟贴
+- 对热门帖子自动蹭热度，默认走 quote tweet
 - 点赞、转发、删除、查帖
 - 同时检查 OAuth2 / Auth1 是否可用
 
@@ -141,7 +141,13 @@ python scripts/x_ops.py hot-reply \
   --dry-run
 ```
 
-去掉 `--dry-run` 就会真正发送回复。
+去掉 `--dry-run` 就会真正发送。
+
+说明：
+
+- `hot-reply` 现在默认走 `quote tweet`
+- 如果你明确要直接回复，显式加 `--channel reply`
+- 如果你只想走 quote tweet，也可以直接用 `hot-quote`
 
 ### 7. 发布长文 thread
 
@@ -278,6 +284,9 @@ python scripts/x_ops.py post --text "hello"
 python scripts/x_ops.py post --text "hello" --image ./a.jpg
 python scripts/x_ops.py thread --title "长文串帖" --text-file ./article.md
 python scripts/x_ops.py reply --tweet-id 1234567890 --text "收到"
+python scripts/x_ops.py hot-reply --query "AI" --reply-template "这个观点值得继续展开：{excerpt}" --dry-run
+python scripts/x_ops.py hot-reply --query "AI" --channel reply --reply-template "@{username} 我同意你提到的这点：{excerpt}" --dry-run
+python scripts/x_ops.py hot-quote --query "AI" --reply-template "这条值得关注：{excerpt}" --dry-run
 python scripts/x_ops.py like --tweet-id 1234567890
 python scripts/x_ops.py repost --tweet-id 1234567890
 python scripts/x_ops.py delete --tweet-id 1234567890
@@ -285,7 +294,7 @@ python scripts/x_ops.py delete --tweet-id 1234567890
 
 ## 热门帖过滤规则
 
-`search` 和 `hot-reply` 默认会：
+`search`、`hot-reply` 和 `hot-quote` 默认会：
 
 - 跳过回复帖
 - 跳过转帖
@@ -309,7 +318,10 @@ python scripts/x_ops.py search --query "AI" --sort hot --no-skip-replies --no-sk
 - `article` 不再默认把长文转换成 thread。这样做是为了避免把“文章”误发成十几个跟帖。
 - 如果你明确就是要发 thread，请使用 `thread` 命令。
 - 如果你一定要兼容旧用法，可以显式写：`article --as-thread`
-- `hot-reply` 默认不会自己生成内容，你需要提供 `--reply-text`、`--reply-text-file` 或 `--reply-template`
+- `hot-reply` 默认走 `quote tweet`，这是为了绕开“禁止陌生人回复”的限制场景
+- 大多数情况下 `quote tweet` 比直接回复更稳，但少数帖子也可能禁止被 quote
+- 如果你明确要走回复链路，请显式传 `--channel reply`
+- `hot-reply` / `hot-quote` 不会自己生成内容，你需要提供 `--reply-text`、`--reply-text-file` 或 `--reply-template`
 - 公开搜索只覆盖近 7 天内容
 - “热度”是基于最近帖子列表做本地重排，不是 X 官方返回的原生热榜
 - 建议先用 `--dry-run` 检查目标帖子和回复内容，再执行真实发送

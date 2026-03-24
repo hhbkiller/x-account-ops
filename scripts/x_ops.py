@@ -932,10 +932,20 @@ def command_hot_reply(client: XClient, args: argparse.Namespace) -> Dict[str, An
         return {"dry_run": True, "query": args.query, "targets": candidates}
     sent = []
     for item in candidates:
-        response = client.create_post(item["reply_text"], reply_to=item["target"]["id"])
-        sent.append({"target": item["target"], "reply_text": item["reply_text"], "response": response})
+        if args.channel == "quote":
+            response = client.create_post(item["reply_text"], quote_tweet_id=item["target"]["id"])
+        else:
+            response = client.create_post(item["reply_text"], reply_to=item["target"]["id"])
+        sent.append(
+            {
+                "target": item["target"],
+                "channel": args.channel,
+                "reply_text": item["reply_text"],
+                "response": response,
+            }
+        )
         time.sleep(1.0)
-    return {"ok": True, "query": args.query, "replied": sent}
+    return {"ok": True, "query": args.query, "channel": args.channel, "replied": sent}
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -1012,11 +1022,12 @@ def build_parser() -> argparse.ArgumentParser:
     delete.add_argument("--tweet-id", required=True, help="Target post id")
     delete.add_argument("--dry-run", action="store_true", help="Preview without sending")
 
-    hot_reply = subparsers.add_parser("hot-reply", help="Search hot posts and reply to the top matches")
+    hot_reply = subparsers.add_parser("hot-reply", help="Search hot posts and engage via quote tweet or reply")
     hot_reply.add_argument("--query", required=True, help="X search query")
     hot_reply.add_argument("--limit", type=int, default=1, help="How many top posts to reply to")
     hot_reply.add_argument("--search-max", type=int, default=25, help="How many recent posts to inspect before reranking")
     hot_reply.add_argument("--min-hot-score", type=float, default=0.0, help="Minimum hot score for an eligible target")
+    hot_reply.add_argument("--channel", choices=["quote", "reply"], default="quote", help="Engagement channel; quote is safer for restricted conversations")
     hot_reply.add_argument("--reply-text", help="Reply body to reuse for every target")
     hot_reply.add_argument("--reply-text-file", help="Path to a UTF-8 text file with the reply body")
     hot_reply.add_argument(
@@ -1028,6 +1039,24 @@ def build_parser() -> argparse.ArgumentParser:
     hot_reply.add_argument("--skip-mentions", action=argparse.BooleanOptionalAction, default=False, help="Skip posts that begin with @mentions")
     hot_reply.add_argument("--skip-reposts", action=argparse.BooleanOptionalAction, default=True, help="Skip reposts as targets")
     hot_reply.add_argument("--dry-run", action="store_true", help="Preview targets and replies without sending")
+
+    hot_quote = subparsers.add_parser("hot-quote", help="Search hot posts and quote tweet the top matches")
+    hot_quote.add_argument("--query", required=True, help="X search query")
+    hot_quote.add_argument("--limit", type=int, default=1, help="How many top posts to quote")
+    hot_quote.add_argument("--search-max", type=int, default=25, help="How many recent posts to inspect before reranking")
+    hot_quote.add_argument("--min-hot-score", type=float, default=0.0, help="Minimum hot score for an eligible target")
+    hot_quote.add_argument("--reply-text", help="Quote text to reuse for every target")
+    hot_quote.add_argument("--reply-text-file", help="Path to a UTF-8 text file with the quote text")
+    hot_quote.add_argument(
+        "--reply-template",
+        help="Template using placeholders such as {author_name}, {username}, {text}, {excerpt}, {url}, {topic}",
+    )
+    hot_quote.add_argument("--skip-self", action=argparse.BooleanOptionalAction, default=True, help="Skip posts authored by the authenticated account")
+    hot_quote.add_argument("--skip-replies", action=argparse.BooleanOptionalAction, default=True, help="Skip reply posts as targets")
+    hot_quote.add_argument("--skip-mentions", action=argparse.BooleanOptionalAction, default=False, help="Skip posts that begin with @mentions")
+    hot_quote.add_argument("--skip-reposts", action=argparse.BooleanOptionalAction, default=True, help="Skip reposts as targets")
+    hot_quote.add_argument("--dry-run", action="store_true", help="Preview targets and quotes without sending")
+    hot_quote.set_defaults(channel="quote")
 
     return parser
 
@@ -1046,6 +1075,7 @@ COMMANDS = {
     "repost": command_repost,
     "delete": command_delete,
     "hot-reply": command_hot_reply,
+    "hot-quote": command_hot_reply,
 }
 
 

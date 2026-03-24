@@ -1,6 +1,6 @@
 ---
 name: x-account-ops
-description: Operate an X account with official X API credentials stored in a local .env file. Use when Codex needs to publish X posts, publish image-plus-text posts, publish explicit numbered threads from long text, search a topic's recent or "hot" posts, like or repost a post, or automatically reply to hot posts using a supplied reply text or reply template. This skill supports OAuth 2.0 user tokens for general posting and search, plus OAuth 1.0a credentials for more reliable media upload when available. Do not use this skill to publish native X Articles unless a future browser/article workflow is added.
+description: Operate an X account with official X API credentials stored in a local .env file. Use when Codex needs to publish X posts, publish image-plus-text posts, publish explicit numbered threads from long text, search a topic's recent or "hot" posts, like or repost a post, or automatically engage with hot posts using either quote tweet or direct reply plus a supplied text or template. This skill supports OAuth 2.0 user tokens for general posting and search, plus OAuth 1.0a credentials for more reliable media upload when available. Do not use this skill to publish native X Articles unless a future browser/article workflow is added.
 ---
 
 # X Account Ops
@@ -18,6 +18,7 @@ python scripts/x_ops.py post --text "Shipping a new build today." --image ./cove
 python scripts/x_ops.py thread --title "Launch notes" --text-file ./launch.md --image ./cover.png
 python scripts/x_ops.py reply --tweet-id 1900000000000000000 --text "Strong point. The rollout risk is mostly around distribution, not capability."
 python scripts/x_ops.py hot-reply --query "open source agents" --limit 2 --reply-template "Good thread, @{username}. The part about '{excerpt}' is the key constraint here."
+python scripts/x_ops.py hot-quote --query "open source agents" --limit 2 --reply-template "Worth watching: {excerpt}"
 ```
 
 ## Credential Rules
@@ -46,7 +47,7 @@ python scripts/x_ops.py search --query "topic words here -is:retweet" --sort hot
 python scripts/x_ops.py reply --tweet-id <id> --text "<reply>"
 ```
 
-5. For batch engagement, use `hot-reply` with `--dry-run` first, inspect targets, then run it again without `--dry-run`.
+5. For batch engagement, use `hot-reply` or `hot-quote` with `--dry-run` first, inspect targets, then run it again without `--dry-run`.
 
 ## Command Guide
 
@@ -68,17 +69,20 @@ python scripts/x_ops.py reply --tweet-id <id> --text "<reply>"
 ### Discovery and engagement
 
 - `search`: search recent posts and optionally rank them as "hot"
-- `search` and `hot-reply` skip replies and reposts by default; use `--no-skip-replies` or `--no-skip-reposts` when you want broader recall
+- `search`, `hot-reply`, and `hot-quote` skip replies and reposts by default; use `--no-skip-replies` or `--no-skip-reposts` when you want broader recall
 - `like`: like a post
 - `repost`: repost a post
-- `hot-reply`: search, rank, and reply to the hottest matches using either `--reply-text`, `--reply-text-file`, or `--reply-template`
+- `hot-reply`: search hot posts and engage them; it now defaults to `quote tweet`, but can still use `--channel reply`
+- `hot-quote`: explicit quote-tweet engagement path for hot posts
 
 ## Behavioral Notes
 
 - "Hot" is heuristic. X recent search returns reverse-chronological results, so the script re-ranks them using public engagement metrics plus a mild freshness decay.
 - `thread` and `article` are different concepts. This skill currently supports threads only. Native X Articles are not implemented here.
 - `article` exists only to prevent silent misuse; it will tell the caller to use `thread` unless `--as-thread` is explicitly passed for backward compatibility.
-- `hot-reply` does not invent text on its own. Supply the final reply or a template so the behavior stays explicit and reviewable.
+- `hot-reply` now defaults to `quote tweet`, because quote-tweeting is usually not blocked by "followers/mentioned users only can reply" restrictions.
+- Quote-tweeting is usually more permissive than direct reply, but some posts may still disable quoting.
+- `hot-reply` and `hot-quote` do not invent text on their own. Supply the final quote/reply text or a template so the behavior stays explicit and reviewable.
 - For risky automation, prefer `--dry-run` first.
 
 ## References
