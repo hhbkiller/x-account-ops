@@ -119,6 +119,99 @@ python scripts/x_ops.py hot-reply \
 python scripts/x_ops.py article --title "发布说明" --text-file ./article.md
 ```
 
+## 安装教程
+
+下面给出两种常用安装方式。
+
+### 方式一：直接克隆到本地后使用
+
+```bash
+git clone https://github.com/hhbkiller/x-account-ops.git
+cd x-account-ops
+pip install -r requirements.txt
+```
+
+然后在仓库根目录创建 `.env`，写入你的 X 凭证，再执行：
+
+```bash
+python scripts/x_ops.py doctor
+```
+
+### 方式二：安装为 Codex / OpenClaw 本地 skill
+
+如果你希望它作为本地 skill 被长期复用，直接把整个目录复制到本地 skills 目录即可。
+
+常见目录示例：
+
+```bash
+~/.codex/skills/x-account-ops
+```
+
+或 Windows:
+
+```powershell
+$env:USERPROFILE\.codex\skills\x-account-ops
+```
+
+推荐步骤：
+
+1. 克隆仓库
+
+```bash
+git clone https://github.com/hhbkiller/x-account-ops.git
+```
+
+2. 复制目录到 skills 目录
+
+Windows PowerShell 示例：
+
+```powershell
+New-Item -ItemType Directory -Force "$env:USERPROFILE\.codex\skills" | Out-Null
+Copy-Item -Recurse -Force .\x-account-ops "$env:USERPROFILE\.codex\skills\x-account-ops"
+```
+
+macOS / Linux 示例：
+
+```bash
+mkdir -p ~/.codex/skills
+cp -R ./x-account-ops ~/.codex/skills/x-account-ops
+```
+
+3. 安装依赖
+
+```bash
+cd ~/.codex/skills/x-account-ops
+pip install -r requirements.txt
+```
+
+4. 准备 `.env`
+
+把 `.env` 放在运行工作目录，或在执行命令时显式指定：
+
+```bash
+python scripts/x_ops.py --env-file /path/to/.env doctor
+```
+
+5. 重启你的 Codex / OpenClaw 会话，让新的 skill 被重新扫描到
+
+### 安装后如何验证
+
+先跑下面三个命令：
+
+```bash
+python scripts/x_ops.py doctor
+python scripts/x_ops.py me
+python scripts/x_ops.py search --query "AI -is:retweet" --sort hot --limit 3
+```
+
+如果：
+
+- `doctor` 显示 `oauth2.ok=true`
+- `me` 能返回账号信息
+- `search` 能返回帖子列表
+
+说明安装已经成功。
+
 ## 常用命令
 
 ```bash
