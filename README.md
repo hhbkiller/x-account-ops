@@ -1,0 +1,174 @@
+# X Account Ops
+
+一个可直接复用的 OpenAI Codex / OpenClaw Skill，用来自动运维 X 平台账号。
+
+它支持：
+
+- 发布纯文本帖子
+- 发布图文帖子
+- 将长文拆分为 thread 连续发布
+- 搜索指定主题的帖子
+- 按“热度”重排搜索结果
+- 对热门帖子自动跟贴
+- 点赞、转发、删除、查帖
+- 同时检查 OAuth2 / Auth1 是否可用
+
+当前实现采用双栈认证：
+
+- OAuth 2.0：用于文本发帖、搜索、回复、点赞、转发、删除、自检
+- OAuth 1.0a：用于更稳定的媒体上传和图文发帖
+
+## 目录结构
+
+```text
+x-account-ops/
+├─ agents/openai.yaml
+├─ references/env-and-scopes.md
+├─ scripts/x_ops.py
+├─ requirements.txt
+├─ README.md
+└─ SKILL.md
+```
+
+## 环境要求
+
+- Python 3.10+
+- `requests`
+
+安装依赖：
+
+```bash
+pip install -r requirements.txt
+```
+
+## 凭证配置
+
+把凭证写到工作目录 `.env` 中。
+
+### OAuth 2.0
+
+```env
+Client ID=...
+Client Secret=...
+Access Token=...
+Refresh Token=...
+User ID=...
+```
+
+### OAuth 1.0a
+
+```env
+Consumer Key=...
+Consumer Key Secret=...
+auth1 Access Token=...
+auth1 Access Secret=...
+```
+
+说明：
+
+- 如果只配置 OAuth2，可以完成文本发帖、搜索、跟贴等能力。
+- 如果额外配置了 OAuth1，脚本会自动把媒体上传和图文发帖切到 OAuth1。
+
+## 快速开始
+
+### 1. 检查凭证
+
+```bash
+python scripts/x_ops.py doctor
+```
+
+### 2. 查看当前账号
+
+```bash
+python scripts/x_ops.py me
+```
+
+### 3. 发布纯文本帖子
+
+```bash
+python scripts/x_ops.py post --text "今天开始测试 X 自动运营 skill"
+```
+
+### 4. 发布图文帖子
+
+```bash
+python scripts/x_ops.py post --text "这是一条图文帖子" --image ./cover.jpg
+```
+
+### 5. 搜索主题热门帖
+
+```bash
+python scripts/x_ops.py search --query "AI agents -is:retweet" --sort hot --limit 10
+```
+
+### 6. 自动跟贴
+
+```bash
+python scripts/x_ops.py hot-reply \
+  --query "AI agents -is:retweet" \
+  --limit 3 \
+  --reply-template "@{username} 这条关于{topic}的观点很有意思，尤其是“{excerpt}”。" \
+  --dry-run
+```
+
+去掉 `--dry-run` 就会真正发送回复。
+
+### 7. 发布长文 thread
+
+```bash
+python scripts/x_ops.py article --title "发布说明" --text-file ./article.md
+```
+
+## 常用命令
+
+```bash
+python scripts/x_ops.py doctor
+python scripts/x_ops.py me
+python scripts/x_ops.py refresh
+python scripts/x_ops.py search --query "OpenAI" --sort hot --limit 5
+python scripts/x_ops.py lookup --tweet-id 1234567890
+python scripts/x_ops.py post --text "hello"
+python scripts/x_ops.py post --text "hello" --image ./a.jpg
+python scripts/x_ops.py reply --tweet-id 1234567890 --text "收到"
+python scripts/x_ops.py like --tweet-id 1234567890
+python scripts/x_ops.py repost --tweet-id 1234567890
+python scripts/x_ops.py delete --tweet-id 1234567890
+```
+
+## 热门帖过滤规则
+
+`search` 和 `hot-reply` 默认会：
+
+- 跳过回复帖
+- 跳过转帖
+
+如果你想扩大召回范围，可以显式关闭：
+
+```bash
+python scripts/x_ops.py search --query "AI" --sort hot --no-skip-replies --no-skip-reposts
+```
+
+## 适用场景
+
+- 自动运营个人 X 账号
+- 自动发布产品动态
+- 搜索某个主题下的热门帖子
+- 对热门帖子做半自动或全自动互动
+- 低成本维护品牌账号内容节奏
+
+## 注意事项
+
+- `hot-reply` 默认不会自己生成内容，你需要提供 `--reply-text`、`--reply-text-file` 或 `--reply-template`
+- 公开搜索只覆盖近 7 天内容
+- “热度”是基于最近帖子列表做本地重排，不是 X 官方返回的原生热榜
+- 建议先用 `--dry-run` 检查目标帖子和回复内容，再执行真实发送
+
+## 与 Skill 的关系
+
+这个仓库本身就是一个可下载的 skill 目录。  
+如果你想把它放进本地 skills 目录，直接复制整个文件夹即可。
+
+## 参考
+
+- [SKILL.md](./SKILL.md)
+- [references/env-and-scopes.md](./references/env-and-scopes.md)

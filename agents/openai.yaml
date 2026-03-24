@@ -1,0 +1,4 @@
+interface:
+  display_name: "X Account Ops"
+  short_description: "Post, search, and engage on X with OAuth2"
+  default_prompt: "Use this skill to operate an X account with official OAuth2 credentials for posting, thread creation, hot-post search, and replies."
