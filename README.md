@@ -64,6 +64,29 @@ auth1 Access Token=...
 auth1 Access Secret=...
 ```
 
+### 代理配置
+
+很多用户所在网络环境无法直接访问 `api.x.com` 或 `upload.twitter.com`，这时必须配置代理。
+
+本项目支持直接把代理写进 `.env`，脚本会自动读取并应用到所有请求：
+
+```env
+HTTP_PROXY=http://127.0.0.1:7890
+HTTPS_PROXY=http://127.0.0.1:7890
+```
+
+如果你使用的是 SOCKS 代理，也可以写成：
+
+```env
+ALL_PROXY=socks5://127.0.0.1:1080
+```
+
+常见建议：
+
+- 只有一个统一代理时，优先配置 `HTTPS_PROXY`
+- 如果 HTTP 和 HTTPS 都走同一个代理，可以同时填写 `HTTP_PROXY` 和 `HTTPS_PROXY`
+- 图文发帖会访问 `upload.twitter.com`，如果不走代理，这一步最容易失败
+
 说明：
 
 - 如果只配置 OAuth2，可以完成文本发帖、搜索、跟贴等能力。
@@ -137,6 +160,18 @@ pip install -r requirements.txt
 python scripts/x_ops.py doctor
 ```
 
+推荐直接从仓库内的 `.env.example` 复制：
+
+```bash
+cp .env.example .env
+```
+
+Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
 ### 方式二：安装为 Codex / OpenClaw 本地 skill
 
 如果你希望它作为本地 skill 被长期复用，直接把整个目录复制到本地 skills 目录即可。
@@ -192,6 +227,12 @@ pip install -r requirements.txt
 python scripts/x_ops.py --env-file /path/to/.env doctor
 ```
 
+建议直接从示例文件复制：
+
+```bash
+cp .env.example .env
+```
+
 5. 重启你的 Codex / OpenClaw 会话，让新的 skill 被重新扫描到
 
 ### 安装后如何验证
@@ -211,6 +252,12 @@ python scripts/x_ops.py search --query "AI -is:retweet" --sort hot --limit 3
 - `search` 能返回帖子列表
 
 说明安装已经成功。
+
+如果你所在网络不能直接访问 X，还要再确认：
+
+- `.env` 已正确填写 `HTTP_PROXY` / `HTTPS_PROXY` / `ALL_PROXY`
+- 本地代理工具已经启动
+- `doctor` 可以正常返回结果而不是网络错误
 
 ## 常用命令
 
@@ -255,6 +302,7 @@ python scripts/x_ops.py search --query "AI" --sort hot --no-skip-replies --no-sk
 - 公开搜索只覆盖近 7 天内容
 - “热度”是基于最近帖子列表做本地重排，不是 X 官方返回的原生热榜
 - 建议先用 `--dry-run` 检查目标帖子和回复内容，再执行真实发送
+- 如果你所在网络无法直连 X，请务必先配置代理，否则搜索、发帖、图文上传都可能失败
 
 ## 与 Skill 的关系
 

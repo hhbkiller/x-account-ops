@@ -15,6 +15,9 @@ The loader accepts either the existing human-readable keys or canonical machine-
 - `Consumer Key Secret` or `X_CONSUMER_SECRET`
 - `auth1 Access Token` or `X_AUTH1_ACCESS_TOKEN`
 - `auth1 Access Secret` or `X_AUTH1_ACCESS_SECRET`
+- `HTTP_PROXY` or `http_proxy`
+- `HTTPS_PROXY` or `https_proxy`
+- `ALL_PROXY` or `all_proxy`
 
 ## Minimum useful scopes
 
@@ -36,3 +39,4 @@ The loader accepts either the existing human-readable keys or canonical machine-
 - If `.env` already uses the spaced key names, the script preserves them and only updates the token values.
 - Recent search only covers the last 7 days. "Hot" ranking is computed locally from recent-search results.
 - Image upload uses OAuth 1.0a automatically when the Auth1 keys are present, because some X apps expose media upload more reliably there than on OAuth 2.0.
+- If proxy keys exist in `.env`, the script applies them to all outbound HTTP requests automatically.

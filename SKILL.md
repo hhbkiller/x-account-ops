@@ -26,7 +26,9 @@ python scripts/x_ops.py hot-reply --query "open source agents" --limit 2 --reply
 - Accepted key names: `Client ID`, `Client Secret`, `Access Token`, `Refresh Token`
 - Also accepted: `X_CLIENT_ID`, `X_CLIENT_SECRET`, `X_ACCESS_TOKEN`, `X_REFRESH_TOKEN`
 - Optional Auth1 keys for media fallback: `Consumer Key`, `Consumer Key Secret`, `auth1 Access Token`, `auth1 Access Secret`
+- Optional proxy keys: `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`
 - If image upload is rejected on OAuth2, the script automatically uses Auth1 when those four keys exist. Read `references/env-and-scopes.md` if a request is rejected.
+- If the user cannot access X directly from their network, fill proxy settings in `.env`; the script reads them and applies them automatically.
 
 ## Recommended Workflow
 

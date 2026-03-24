@@ -30,6 +30,9 @@ ENV_ALIASES: Dict[str, List[str]] = {
     "consumer_secret": ["Consumer Key Secret", "X_CONSUMER_SECRET", "X_API_SECRET"],
     "auth1_access_token": ["auth1 Access Token", "X_AUTH1_ACCESS_TOKEN", "X_ACCESS_TOKEN_OAUTH1"],
     "auth1_access_secret": ["auth1 Access Secret", "X_AUTH1_ACCESS_SECRET", "X_ACCESS_TOKEN_SECRET"],
+    "http_proxy": ["HTTP_PROXY", "http_proxy"],
+    "https_proxy": ["HTTPS_PROXY", "https_proxy"],
+    "all_proxy": ["ALL_PROXY", "all_proxy"],
 }
 
 PREFERRED_ENV_KEYS = {
@@ -42,6 +45,9 @@ PREFERRED_ENV_KEYS = {
     "consumer_secret": "Consumer Key Secret",
     "auth1_access_token": "auth1 Access Token",
     "auth1_access_secret": "auth1 Access Secret",
+    "http_proxy": "HTTP_PROXY",
+    "https_proxy": "HTTPS_PROXY",
+    "all_proxy": "ALL_PROXY",
 }
 
 TOKEN_URL = "https://api.x.com/2/oauth2/token"
@@ -289,6 +295,9 @@ class Credentials:
     consumer_secret: Optional[str]
     auth1_access_token: Optional[str]
     auth1_access_secret: Optional[str]
+    http_proxy: Optional[str]
+    https_proxy: Optional[str]
+    all_proxy: Optional[str]
 
 
 class CredentialStore:
@@ -313,6 +322,9 @@ class CredentialStore:
             consumer_secret=values.get("consumer_secret"),
             auth1_access_token=values.get("auth1_access_token"),
             auth1_access_secret=values.get("auth1_access_secret"),
+            http_proxy=values.get("http_proxy"),
+            https_proxy=values.get("https_proxy"),
+            all_proxy=values.get("all_proxy"),
         )
 
     def save_tokens(self, access_token: str, refresh_token: Optional[str], user_id: Optional[str]) -> None:
@@ -329,6 +341,19 @@ class XClient:
         self.store = store
         self.credentials = store.load()
         self.session = requests.Session()
+        self._apply_proxies()
+
+    def _apply_proxies(self) -> None:
+        proxies = {}
+        if self.credentials.http_proxy:
+            proxies["http"] = self.credentials.http_proxy
+        if self.credentials.https_proxy:
+            proxies["https"] = self.credentials.https_proxy
+        if self.credentials.all_proxy:
+            proxies.setdefault("http", self.credentials.all_proxy)
+            proxies.setdefault("https", self.credentials.all_proxy)
+        if proxies:
+            self.session.proxies.update(proxies)
 
     def _auth_headers(self) -> Dict[str, str]:
         return {"Authorization": f"Bearer {self.credentials.access_token}"}
